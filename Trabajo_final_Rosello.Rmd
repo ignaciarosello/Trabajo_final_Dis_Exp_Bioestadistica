@@ -1,0 +1,585 @@
+---
+title: "Trabajo_final_Rosello"
+author: "Ignacia Rosello"
+date: "2026-06-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+## El estudio
+
+# Diversidad de ectomicorrizas mediada por el muérdago _Desmaria mutabilis_ en un bosque de _Nothofagus_ de alta montaña
+
+Se trabajará con una matriz de datos simulada, buscando representar los datos que serían obtenidos a partir del siguiente diseño experimental:
+
+# Pregunta de investigación
+
+**¿Modifica la presencia del muérdago _Desmaria mutabilis_ en bosques de _Nothofagus pumilio_ de alta montaña la composición y la diversidad de las comunidades de hongos ectomicorrícicos en la rizósfera de _N. pumilio_?**
+
+El sitio de estudio es el bosque de _Nothofagus_ de alta montaña en el Parque Nacional Nahuelbuta, ubicado en la zona más elevada de la cordillera de Nahuelbuta, en la Provincia de Malleco, región de la Araucanía, Chile (37°78’S 72°36’W). Se identificaron 20 individuos de _Nothofagus pumilio_ (familia Nothofagaceae) que presentaran infección por _Desmaria mutabilis_, un muérdago hemiparásito de la familia Loranthaceae, y 20 individuos con ausencia de infección, cumpliendo con criterios de distancia suficiente para garantizar independencia y evitar la pseudorreplicación espacial. Para cada individuo de _N. pumilio_ se colectó una muestra de rizósfera, sumando un total de 20 muestras de rizósfera provenientes de individuos hospederos (infectados por _D. mutabilis_) y 20 muestras provenientes de individuos no infectados.
+
+Se extrajo ADN de las muestras de rizósfera para ser secuenciadas por _metabarcoding_ de la región ITS2 para determinar y comparar la composición taxonómica de las comunidades de hongos ectomicorrícicos (HECM) en la rizósfera de individuos de _N. pumilio_ en presencia y en ausencia de infección por el muérdago _D. mutabilis_. Los datos obtenidos fueron procesados y se obtuvo una tabla de abundancia por especie según presencia o ausencia de _D. mutabilis_. Por tanto, el presente estudio tiene como hipótesis y objetivos:
+
+# Hipótesis
+
+**Dado que los muérdagos producen hojarasca rica en nutrientes, la presencia del muérdago _Desmaria mutabilis_ en bosques de _Nothofagus pumilio_ de alta montaña modifica la composición y la diversidad de las comunidades de hongos ectomicorrícicos en la rizósfera de _N. pumilio_. Por tanto, los sitios con presencia de D. mutabilis presentarán una composición diferente y una mayor diversidad de hongos ectomicorrícicos en comparación con los sitios sin muérdago.**
+
+
+# Objetivo general
+
+**Determinar el efecto de la presencia del muérdago _Desmaria mutabilis_ sobre la composición y la diversidad de las comunidades de hongos ectomicorrícicos en la rizósfera de _Nothofagus pumilio_ en bosques de _N. pumilio_ de alta montaña.**
+
+
+# Objetivos específicos
+
+**1.	Caracterizar las comunidades de hongos ectomicorrícicos en la rizósfera de _Nothofagus pumilio_ en individuos infectados y no infectados por _D. mutabilis_.**
+
+**2.	Evaluar las diferencias en la composición y la diversidad de las comunidades de hongos ectomicorrícicos entre individuos infectados y no infectados por _D. mutabilis_.**
+
+
+# Variables
+
+**Variable independiente:** Presencia del muérdago _Desmaria mutabilis_ (presencia/ausencia de _D. mutabilis_)
+**Variable dependiente:** Riqueza y abundancia de especies de hongos ectomicorrícicos.
+
+
+#-------------------------------------------------------------------------------
+
+## OE1.	Caracterizar las comunidades de hongos ectomicorrícicos en la rizósfera de _Nothofagus pumilio_ para individuos infectados y no infectados por _D. mutabilis_
+
+# 1. Generación de datos simulados
+
+La matriz de abundancia de hongos ectomicorrícicos pseudorrealista (realista pero manejable en magnitud) simulando las tablas de abundancia obtenidas a partir del procesamiento de los datos obtenidos en la secuenciación fue generada mediante código R desarrollado con asistencia de un modelo de lenguaje de inteligencia artificial (Perplexity AI, Junio 2026). El código fue diseñado específicamente para replicar características pseudorrealistas de riqueza, abundancia y evenness basadas en datos de metabarcoding ITS2 de rizósfera en bosques de Nothofagus, siguiendo el _workflow_ descrito por Saona et al. (2025).
+
+```{r Generación de la matriz de datos}
+set.seed(42)
+
+# Parámetros
+n_samples <- 40
+n_sp <- 35  # número de ASVs/especies HECM
+
+sp_names <- paste0("sp", sprintf("%02d", 1:n_sp))
+
+# Grupos: 20 con presencia, 20 con ausencia de D. mutabilis
+presencia_vec <- c(rep("presencia", 20), rep("ausencia", 20))
+
+# Parámetros de abundancia por grupo
+# Con muérdago: más riqueza, mayor abundancia, distribución más equitativa
+# Sin muérdago: menos riqueza, dominancia por pocas especies (menor evenness)
+
+generate_sample <- function(group, n_sp) {
+  if (group == "presencia") {
+    # Alta riqueza: ~22-30 especies presentes por muestra
+    n_present <- sample(22:30, 1)
+    present_sp <- sample(1:n_sp, n_present)
+    # Distribución log-normal moderada (más evenness)
+    counts <- rep(0, n_sp)
+    counts[present_sp] <- round(rlnorm(n_present, meanlog = 2.5, sdlog = 1.2))
+  } else {
+    # Baja riqueza: ~8-16 especies presentes
+    n_present <- sample(8:16, 1)
+    present_sp <- sample(1:n_sp, n_present)
+    # Mayor dominancia: pocos taxa con muchas lecturas, resto muy bajo
+    counts <- rep(0, n_sp)
+    raw <- round(rlnorm(n_present, meanlog = 2.0, sdlog = 1.5))
+    # Amplifica dominantes
+    dominants <- order(raw, decreasing = TRUE)[1:3]
+    raw[dominants] <- raw[dominants] * sample(2:3, 3, replace = TRUE)
+    counts[present_sp] <- raw
+  }
+  return(counts)
+}
+
+# --- Construir matriz ---
+abundance_matrix <- t(sapply(presencia_vec, generate_sample, n_sp = n_sp))
+colnames(abundance_matrix) <- sp_names
+
+# Armar data frame final
+df_wide <- data.frame(
+  D_mutabilis = presencia_vec,
+  abundance_matrix,
+  check.names = FALSE,
+  row.names = NULL   # ← elimina los rownames automáticos
+
+)
+
+# Vista previa
+head(df_wide[, 1:8])
+dim(df_wide)
+
+# --- Verificación rápida de Shannon ---
+library(vegan)
+
+H <- diversity(abundance_matrix, index = "shannon")
+df_check <- data.frame(D_mutabilis = presencia_vec, Shannon = H)
+
+tapply(df_check$Shannon, df_check$D_mutabilis, mean)
+# Debería mostrar H más alto en "presencia" que en "ausencia"
+
+# Exportar en formato .csv (remover # si se desea exportar)
+#write.csv(df_wide, "fake_hhecm_data.csv", row.names = FALSE)
+```
+
+## 2.	Evaluar las diferencias en la diversidad de las comunidades de hongos ectomicorrícicos entre individuos infectados y no infectados por _D. mutabilis_
+
+# 2. Análisis exploratorio de los datos
+
+Tras responder al OE1 al haber generado la matriz de datos simulados se comienza con la exploración de los datos. A continuación, se ejecitan algunas funciones básicas y plots exploratorios pertinentes para conocer la estructura y obtener una aproximación a su distribución.
+
+```{r Exploración de la estructura y contenido de los datos}
+#Estructura y contenido de los datos
+
+datah <- df_wide #Solo para hacer el data.frame más rápido y amigable de llamar
+
+attach(datah)
+str(datah)
+head(datah)
+dim(datah)
+summary(datah)
+
+```
+
+Entonces, para explorar los valores numéricos:
+
+```{r Ajustes necesarios para explorar numéricamente los datos}
+datan <- datah[, -1]
+
+#Para confirmar:
+dim(datan)
+sapply(datan, is.numeric)
+
+#Distribución por condición (presencia/ausencia de D. mutabilis)
+table(datah$D_mutabilis)
+
+sum(datan)
+colSums(datan)
+rowSums(datan)
+summary(datan)
+
+# Abundancia total
+tot_abundance <- colSums(datan)
+summary(tot_abundance)
+
+# Riqueza
+richness <- rowSums(datan > 0)
+print("Species richness summary:")
+summary(richness)
+```
+Ahora, para explorar visualmente mediante representaciones gráficas:
+
+```{r Exploración visual de los datos}
+#Distribución total de los datos
+
+library(ggplot2)
+library(dplyr)
+
+par(mar=c(8,4,2,1))
+barplot(colSums(datan), las=2, col="lightblue",
+        main="Abundancia total por especie",
+        ylab="Abundancia total",
+        xlab= "Especies")
+
+# Abundancia total por muestra
+df_wide <- df_wide %>%
+  mutate(total = rowSums(across(starts_with("sp"))))
+
+# Boxplot abundancia total por muestra
+ggplot(df_wide, aes(x = D_mutabilis, y = total, fill = D_mutabilis)) +
+  geom_boxplot() +
+  labs(
+    title = expression("Abundancia total por presencia y ausencia de " * italic("D. mutabilis")),
+    x = expression(italic("D. mutabilis")),
+    y = "Abundancia total",
+    fill = expression(italic("D. mutabilis"))
+  )
+```
+
+Luego de una primera aproximación a los datos, comenzamos realmente con la comparación según nuestra variable de interés (presencia/ausencia de _D. mutabilis_).
+
+# 3. Comparación de la composición de las comunidades 
+
+```{r Comparación de la diversidad de las comunidades en presencia y ausencia de D. mutabilis}
+#Examinar composición promedio de las comunidades mediante un stacked barplot
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+
+hecm_with_groups <- df_wide %>%
+  dplyr::select(D_mutabilis, starts_with("sp"))
+
+species_cols <- names(hecm_with_groups)[names(hecm_with_groups) != "D_mutabilis"]
+
+group_composition <- hecm_with_groups %>%
+  group_by(D_mutabilis) %>%
+  summarise(across(all_of(species_cols), sum), .groups = "drop") %>%
+  pivot_longer(cols = -D_mutabilis, names_to = "Species", values_to = "Abundance")
+
+Stacked_bar <- ggplot(group_composition, aes(x = D_mutabilis, y = Abundance, fill = Species)) +
+  geom_bar(stat = "identity", position = "fill") +
+  labs(
+    title = expression("Composicion de las comunidades de HECM por presencia y ausencia de " * italic("D. mutabilis")),
+    x = expression(italic("D. mutabilis")),
+    y = "Proporcion de la abundancia total",
+    fill = "Especie"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "right"
+  )
+
+print(Stacked_bar)
+
+ggsave(
+  filename = "stacked_bar_hecm.png",
+  plot = Stacked_bar,
+  width = 10,
+  height = 6,
+  dpi = 300
+)
+```
+
+Los datos aparentan presentar una distribución con bastantes 0s y, por consiguiente, especies raras. Entonces, dado que nos interesa comparar el efecto de la presencia de _D. mutabilis_ sobre las comunidades de HECM, un análisis de tipo GLM mediante el paquete **mvabund** resulta apropiado. A continuación, cumplimos los requisitos para este análisis evaluando los supuestos necesarios.
+
+# 4. Evaluación de supuestos y distribución
+
+```{r Carga de algunos paquetes posiblemente necesarios}
+library(vegan)      
+library(mvabund)    
+library(ggplot2)    
+library(dplyr)      
+library(tidyr)      
+library(corrplot)   
+```
+
+```{r Preparación de los datos para evaluación de supuestos y distribución}
+#PREPARACIÓN DE LOS DATOS
+
+# Convertir a factor
+df_wide$D_mutabilis <- as.factor(df_wide$D_mutabilis)
+
+# Extraer solo las columnas de especies (sp01 a sp35)
+hecm_species <- df_wide[, grep("^sp", names(df_wide))]
+
+# Filtrar especies con abundancia total > 0 (eliminar ASVs con 0 reads en todas las muestras)
+hecm_species <- hecm_species[, colSums(hecm_species) > 0]
+
+# Convertir a objeto mvabund para manyglm
+library(mvabund)
+hecm_mv <- mvabund(hecm_species)
+
+cat("Numero de especies filtradas:", ncol(hecm_species), "\n")
+cat("Numero de muestras:", nrow(hecm_species), "\n")
+
+#RELACIÓN MEDIA-VARIANZA PARA EVALUAR SI EXISTE SOBREDISPERSIÓN
+
+species_means <- colMeans(hecm_species)
+species_vars <- apply(hecm_species, 2, var)
+
+plot(species_means, species_vars, 
+     pch = 16, col = "steelblue",
+     xlab = "Mean Abundance", 
+     ylab = "Variance",
+     main = "Mean-Variance Relationship HECM")
+abline(a = 0, b = 1, col = "red", lty = 2)  
+text(max(species_means)*0.7, max(species_vars)*0.9, 
+     "If points are above the line,\nvariance > mean (overdispersion)", 
+     cex = 0.8)
+
+# EVALUACIÓN DE TIPO DE DISTRIBUCIÓN: POISSON VS BINOMIAL NEGATIVA
+
+# Modelo con distribución de Poisson
+mod_poisson <- manyglm(hecm_mv ~ D_mutabilis, family = "poisson")
+
+# Modelo con distribución Binomial Negativa
+mod_negbin <- manyglm(hecm_mv ~ D_mutabilis, family = "negative.binomial")
+
+# Plot de residuales para distribución de Poisson
+par(mfrow = c(2, 2))
+distr_pois <- plot(mod_poisson, which = 1:2)
+
+# Plot de residuales para distribución Binomial Negativa
+par(mfrow = c(2, 2))
+distr_nb <- plot(mod_negbin, which = 1:2)
+
+par(mfrow = c(1, 1))
+```
+
+De acuerdo con los resultados del análisis de la relación media-varianza y las pruebas de tipos de distribución, los datos presentan sobredispersión y una distribución de tipo bionomial negativa. Considerando esta información, podemos continuar con la construcción del modelo final. Dado que nuestra variable de interés es solo la presencia/ausencia de _D. mutabilis_, solo se incorporará como predictor la presencia/asuencia de _D. mutabilis_.
+
+# 5. Construcción del modelo final
+
+```{r Construcción del modelo final}
+# MODELO FINAL
+
+mv_model <- manyglm(hecm_mv ~ D_mutabilis,
+                    data = df_wide,
+                    family = "negative.binomial")
+
+# ANOVA con tests ajustados y bootstrapping
+cat("\n=== ANOVA (manyglm) ===\n")
+anova_result <- anova(mv_model, p.uni = "adjusted", nBoot = 999, test = "LR")
+print(anova_result)
+
+cat("\n=== COEFICIENTES DEL MODELO ===\n")
+print(mv_model)
+summary(mv_model)
+```
+
+La presencia de _D. mutabilis_ tiene un efecto significativo sobre la composición de las comunidades de HECM, tanto a nivel global del modelo (test de razón de verosimilitud, Dev = 80.16, p = 0.017) como a nivel del coeficiente asociado al predictor (test de Wald, estadístico = 10.17, p = 0.005), lo que confirma la robustez del resultado. Ahora evaluamos cómo este efecto se expresa sobre la diversidad.
+
+
+# 6. Representación gráfica de los datos para visualizar lo que se ha probado estadísticamente utilizando una herramienta visual multivariada
+
+Ahora, para garantizar la robustez de nuestra apreciación de los resultados, graficamos usando una herramienta visual multivariada.
+
+```{r Graficar los resultados utilizando una herramienta visual multivariada}
+library(vegan)
+library(ggplot2)
+library(dplyr)
+
+# Crear matriz de abundancia: especies
+# Columnas de especies: sp01-sp35 (grep("^sp", names(df_wide)))
+ecm_species <- df_wide[, grep("^sp", names(df_wide))]
+
+# Crear matriz ambiental: presencia/asuencia de D_mutabilis
+env_data <- data.frame(
+  D_mutabilis = df_wide$D_mutabilis
+)
+
+# Convertir a factor
+env_data$D_mutabilis <- as.factor(env_data$D_mutabilis)
+
+# Distancia Bray-Curtis (appropriada para datos de abundancia)
+ecm.dist <- vegdist(ecm_species, method = "bray")
+
+# NMDS con metaMDS (auto-rarefaction y múltiples intentos)
+ecm.mds <- metaMDS(ecm.dist, distance = "bray", trymax = 100)
+
+# Ver resultado
+print(ecm.mds)
+
+# Extraer scores de NMDS
+ecm.scores <- as.data.frame(scores(ecm.mds))
+ecm.scores$site <- rownames(ecm.scores)
+ecm.scores$D_mutabilis <- env_data$D_mutabilis
+
+# Ver scores
+print(head(ecm.scores))
+
+# Convex hull para "ausencia"
+grp.ausencia <- ecm.scores[ecm.scores$D_mutabilis == "ausencia", ][
+  chull(ecm.scores[ecm.scores$D_mutabilis == "ausencia", c("NMDS1", "NMDS2")]), ]
+
+# Convex hull para "presencia"
+grp.presencia <- ecm.scores[ecm.scores$D_mutabilis == "presencia", ][
+  chull(ecm.scores[ecm.scores$D_mutabilis == "presencia", c("NMDS1", "NMDS2")]), ]
+
+# Combine hulls
+hull.groups <- rbind(grp.ausencia, grp.presencia)
+
+# Plot: NMDS según presencia/ausencia de D. mutabilis
+p_nmds <- ggplot() +
+  # Polygon (convex hull)
+  geom_polygon(data = hull.groups,
+               aes(x = NMDS1, y = NMDS2, fill = D_mutabilis, group = D_mutabilis),
+               alpha = 0.30) +
+  # Points
+  geom_point(data = ecm.scores,
+             aes(x = NMDS1, y = NMDS2, shape = D_mutabilis, colour = D_mutabilis),
+             size = 4) +
+  # Coordenadas iguales
+  coord_equal() +
+  # Theme
+  theme_bw() +
+  labs(
+    x = "nMDS 1", 
+    y = "nMDS 2",
+    title = expression("Composicion de especies por " * italic("D. mutabilis")),
+    colour = expression(italic("D. mutabilis")),
+    shape = expression(italic("D. mutabilis")),
+    fill = expression(italic("D. mutabilis"))
+  ) +
+  # Color manual
+  scale_colour_manual(values = c("ausencia" = "#E74C3C", "presencia" = "#2E9BDF")) +
+  scale_fill_manual(values = c("ausencia" = "#E74C3C", "presencia" = "#2E9BDF")) +
+  scale_shape_manual(values = c("ausencia" = 16, "presencia" = 17)) +
+  # Theme detallado
+  theme(
+    axis.text.x = element_text(size = 16),
+    axis.text.y = element_text(size = 16),
+    axis.ticks = element_blank(),
+    axis.title.x = element_text(size = 18),
+    axis.title.y = element_text(size = 18),
+    panel.background = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    plot.background = element_blank(),
+    legend.title = element_blank(),
+    legend.text = element_text(size = 16),
+    legend.position = "top"
+  )
+
+print(p_nmds)
+
+# Exportar
+ggsave("nmds_by_muerdago.png", p_nmds, width = 10, height = 8, dpi = 300)
+print("Plot exportado como 'nmds_by_muerdago.png'")
+
+#  Valor de estrés
+print(paste0("Stress: ", ecm.mds$stress))
+```
+
+Es importante considerar que la bondad de ajuste de la representación gráfica mediante NMDS (estrés), es pobre (~0.263), por lo que, si bien, tenemos el respaldo estadístico suficiente para interpretar nuestros resultados, esta figura en particular, debe interpretarse con cautela.
+
+# 7. Cálculo de métricas de diversidad alfa
+
+```{r Cálculo de métricas de diversidad alfa}
+library(vegan)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+# 1. CALCULAR MÉTRICAS DE DIVERSIDAD ALFA 
+
+# Matriz de abundancia: df_wide (solo columnas de especies sp01-sp35)
+ecm_species <- df_wide[, grep("^sp", names(df_wide))]
+
+# Cálculo de métricas de diversidad alfa
+alpha <- data.frame(
+  D_mutabilis = df_wide$D_mutabilis,  # Variable (presencia/ausencia de D. mutabilis)
+  richness  = specnumber(ecm_species),  # Riqueza (S)(n especies con count > 0) 
+  shannon   = diversity(ecm_species, index = "shannon"),  # Shannon (H')
+  evenness  = diversity(ecm_species, index = "shannon") / log(specnumber(ecm_species))  # Pielou (J')
+)
+
+print("=== DIVERSIDAD ALFA POR MUESTRA ===")
+print(alpha)
+
+# 2. RESUMIR
+
+alpha_summary <- alpha %>%
+  group_by(D_mutabilis) %>%  # Variable (presencia/ausencia de D. mutabilis)
+  summarise(
+    mean_S  = mean(richness),  sd_S  = sd(richness),
+    mean_H  = mean(shannon),   sd_H  = sd(shannon),
+    mean_J  = mean(evenness),  sd_J  = sd(evenness),
+    n = n(),
+    .groups = "drop"
+  )
+
+print(alpha_summary)
+
+```
+
+
+# 8. Construcción de modelos GLM y evaluación de supuestos sobre los residuales para métricas de diversidad alfa
+
+Para comparar de manera estadísticamente válida las métricas de diversidad alfa entre las muestras con y sin presencia de _D. mutabilis_, se ajustan modelos GLM específicos para cada métrica. La distribución de errores se selecciona en función de la naturaleza de cada variable (conteos para riqueza, valores continuos para Shannon, proporciones para evenness) y se compara mediante AIC cuando existe más de una distribución candidata. Una vez construido cada modelo, los supuestos (distribución de los residuales, dispersión, presencia de outliers) se evalúan sobre los residuales simulados del modelo mediante el paquete **DHARMa**.
+
+
+```{r GLMs para la comparación de métricas de diversidad alfa}
+# GLMs para Riqueza, Shannon y Evenness
+
+library(MASS)      # glm.nb
+library(DHARMa)
+library(glmmTMB)   # para evenness (beta), compatible con DHARMa
+
+# Riqueza (S) 
+# Al tratarse de datos de conteo, probamos y comparamos modelos con dos posibles distribuciones (Poisson o Bionmial negativa)
+glm_S_pois <- glm(richness ~ D_mutabilis, data = alpha, family = poisson)
+glm_S_nb   <- glm.nb(richness ~ D_mutabilis, data = alpha)
+
+AIC(glm_S_pois, glm_S_nb)
+
+# Validación del modelo con menor AIC: glm_S_pois
+sim_S <- simulateResiduals(glm_S_pois, plot = TRUE)
+testDispersion(sim_S)       
+testZeroInflation(sim_S)
+testUniformity(sim_S)
+
+summary(glm_S_pois)  
+
+# Shannon (H) 
+#Los valores de H son datos continuos y positivos, por lo que su distribución podría en teoría ser tanto gamma como gaussiana.
+glm_H_gaus  <- glm(shannon ~ D_mutabilis, data = alpha, family = gaussian)
+glm_H_gamma <- glm(shannon ~ D_mutabilis, data = alpha, family = Gamma(link = "log"))
+
+AIC(glm_H_gaus, glm_H_gamma)
+range(alpha$shannon)  # chequear que no haya ceros si se elige Gamma (soporte estrictamente positivo)
+
+# Validación del modelo con menor AIC: glm_H_gaus
+sim_H <- simulateResiduals(glm_H_gaus, plot = TRUE)  
+testUniformity(sim_H)
+testOutliers(sim_H)
+
+summary(glm_H_gaus) 
+
+# Evenness (J) 
+# Evenness solo puede tomar valores estrictamente entre 0 y 1, por lo que la distribución es de tipo Beta. Betareg no es compatible con DHARMa (no es objeto glm) -> se usa glmmTMB con familia Beta.
+
+glm_J <- glmmTMB(evenness ~ D_mutabilis, data = alpha, family = beta_family())
+
+sim_J <- simulateResiduals(glm_J, plot = TRUE)
+testUniformity(sim_J)
+testDispersion(sim_J)
+
+summary(glm_J)
+```
+
+Para cada métrica, el modelo seleccionado por AIC fue validado satisfactoriamente mediante los diagnósticos de residuales de DHARMa (uniformidad, dispersión y outliers según corresponda), por lo que los valores p reportados en los `summary()` son confiables. El efecto de la presencia de _D. mutabilis_ resulta consistente y significativo sobre las tres métricas de diversidad alfa (p < 0.001).
+
+# 9. Representación gráfica de métricas de diversidad alfa
+
+Ahora que confirmamos, mediante ambos enfoques, la significancia de las diferencias, graficamos los resultados de las métricas de diversidad alfa para ambos grupos y apreciamos visualmente el efecto de la presencia y ausencia de _D. muatabilis_ sobre las comunidades de hecm.
+
+```{r Graficar diferencias en métricas de diversidad alfa}
+# PLOT
+alpha_long <- alpha %>%
+  pivot_longer(cols = c(richness, shannon, evenness),
+               names_to = "metric", values_to = "value") %>%
+  mutate(metric = case_when(
+    metric == "richness" ~ "Riqueza de especies (S)",
+    metric == "shannon"  ~ "Diversidad Shannon (H')",
+    metric == "evenness" ~ "Evenness Pielou (J')"
+  ),
+         D_mutabilis = factor(D_mutabilis, levels = c("ausencia", "presencia")))
+
+p_alpha <- ggplot(alpha_long,
+                  aes(x = D_mutabilis, y = value, fill = D_mutabilis)) +
+  geom_boxplot(alpha = 0.75, outlier.shape = 21, width = 0.55,
+               position = position_dodge(0.7)) +
+  geom_jitter(aes(color = D_mutabilis),
+              position = position_jitterdodge(jitter.width = 0.1, dodge.width = 0.7),
+              size = 2, alpha = 0.8) +
+  scale_fill_manual(values = c("ausencia" = "#E74C3C", "presencia" = "#2E9BDF")) +
+  scale_color_manual(values = c("ausencia" = "#C0392B", "presencia" = "#1A5C8A")) +
+  facet_wrap(~ metric, scales = "free_y", ncol = 3) +
+  labs(
+    title = expression("Diversidad alfa por presencia de " * italic("D. mutabilis")),
+    x = NULL, y = NULL,
+    fill = expression(italic("D. mutabilis")),
+    color = expression(italic("D. mutabilis"))
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    strip.background = element_rect(fill = "grey90"),
+    panel.grid.minor = element_blank(),
+    legend.position = "top",
+    axis.text.x = element_text(size = 12, face = "bold")
+  )
+
+print(p_alpha)
+
+# Exportar
+ggsave("alpha_diversity_by_muerdago.png", p_alpha, width = 12, height = 6, dpi = 300)
+print("Plot exportado como 'alpha_diversity_by_muerdago.png'")
+
+```
+
