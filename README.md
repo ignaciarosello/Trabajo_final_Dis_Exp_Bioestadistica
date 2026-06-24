@@ -6,7 +6,7 @@ Trabajo final Diseño Experimental y Bioestadística Ignacia Roselló
 Este repositorio contiene el código para la generación de la matriz de datos simulada y el correspondiente análisis estadístico para el trabajo final del curso titulado "Diversidad de ectomicorrizas mediada por el muérdago Desmaria mutabilis en bosques de Nothofagus de alta montaña"
 
 ## Estructura del repositorio
-Trabajo_final_Rosello.Rmd: Documento RMarkdown anotado y reproducible para la generación de la matriz de datos simulada y el correspondiente análisis estadístico.
+**Trabajo_final_Rosello.Rmd:** Documento RMarkdown anotado y reproducible para la generación de la matriz de datos simulada y el correspondiente análisis estadístico.
 
 # Estructura del archivo:
 - Descripción del estudio
@@ -24,8 +24,7 @@ Trabajo_final_Rosello.Rmd: Documento RMarkdown anotado y reproducible para la ge
 ## Instrucciones para la Reproducción del Análisis
 Para ejecutar este código y reproducir la totalidad de las tablas y figuras del informe, siga estos pasos:
 - Clone este repositorio o descargue los archivos en una carpeta local.
-Abra el archivo TrabajoFinalR.Rmd en RStudio (se recomienda trabajar dentro de un Proyecto de RStudio .Rproj).
-Asegúrese de tener instalados los siguientes paquetes ejecut
+Abra el archivo **Trabajo_final_Rosello.Rmd** en RStudio (se recomienda trabajar dentro de un Proyecto de RStudio).
 
 ## Requisitos
 - R versión 4.x o superior
