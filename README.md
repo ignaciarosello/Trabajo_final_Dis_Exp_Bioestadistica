@@ -8,8 +8,9 @@ Este repositorio contiene el código para la generación de la matriz de datos s
 ## Estructura del repositorio
 Trabajo_final_Rosello.Rmd: Documento RMarkdown anotado y reproducible para la generación de la matriz de datos simulada y el correspondiente análisis estadístico.
 
-# Estructura del código:
-Descripción del estudio
+# Estructura del archivo:
+- Descripción del estudio
+- Código:
 1. Generación de datos simulados
 2. Análisis exploratorio de los datos
 3. Comparación de la composición de las comunidades
