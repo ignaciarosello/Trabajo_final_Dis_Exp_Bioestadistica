@@ -22,9 +22,9 @@ Este repositorio contiene el código para la generación de la matriz de datos s
 9. Representación gráfica de métricas de diversidad alfa
 
 ## Instrucciones para la Reproducción del Análisis
-Para ejecutar este código y reproducir la totalidad de las tablas y figuras del informe, siga estos pasos:
-- Clone este repositorio o descargue los archivos en una carpeta local.
-Abra el archivo **Trabajo_final_Rosello.Rmd** en RStudio (se recomienda trabajar dentro de un Proyecto de RStudio).
+Para ejecutar este código y reproducir la totalidad de los resultados siga estos pasos:
+- Clone o descargue este repositorio o el archivo **Trabajo_final_Rosello.Rmd**.
+- Abra el archivo **Trabajo_final_Rosello.Rmd** en RStudio (se recomienda trabajar dentro de un Proyecto de RStudio).
 
 ## Requisitos
 - R versión 4.x o superior
@@ -33,5 +33,5 @@ Abra el archivo **Trabajo_final_Rosello.Rmd** en RStudio (se recomienda trabajar
 ## Cómo reproducir el análisis
 1. Clonar o descargar este repositorio
 2. Abrir RStudio y establecer el directorio de trabajo en la carpeta del proyecto
-3. Ejecutar el código completo (Ctrl+Alt+R) o bien, en orden.
+3. Ejecutar el código completo (Ctrl+Alt+R) o bien, en orden numérico (#1 → #2 → #3).
 
